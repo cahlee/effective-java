@@ -33,6 +33,7 @@ try (InputStream   in = new FileInputStream(src);
 ```
 - 짧다
 - 여전히 catch절 사용 가능
+- **close를 신경쓰지 않아도 된다.**
 - 첫번째 예외에 관한 정보가 출력된다
   - 다른 예외에 관한 정보는 숨겨졌다(suppressed) 꼬리표를 달고 출력된다.
   - Throwale에 추가된 getSuppressed 메서드를 이용하면 프로그램 코드에서 가져올 수 있다.
