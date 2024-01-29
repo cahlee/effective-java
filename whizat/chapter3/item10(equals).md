@@ -23,35 +23,91 @@ public boolean equals(Object o) {
 ### equals 메서드는 반드시 동치관계(equivalence relation)을 구현하며, 다음을 만족한다.
 #### 1. 반사성 (reflexivity): null이 아닌 모든 참조 값 x에 대해 x.equals(x) 는 true이다.
 - 객체는 자기 자신과 같아야 한다.
-
-
-*** 
-작성중
 #### 2. 대칭성 (symmetry): null이 아닌 모든 참조 값 x, y에 대해 x.equals(y)가 true이면 y.equals(x)도 true이다.
-- **대칭성 작성 필요**
+- 두 객체의 서로에 대한 동치 여부에 똑같이 대답해야 한다.
+``` java
+public final class CaseInsensitiveString {
+    private final String s;
+
+    public CaseInsensitiveString(String s) {
+        this.s = Objects.requireNonNull(s);
+    }
+    // 대칭성 위배
+    @Override
+    public boolean equals(Object o) {
+	if (o instanceof CaseInsensitiveString)
+	    return s.equalsIgnoreCase(((CaseInsensitiveString) o).s);
+	if (o instanceof String)  // 한 방향으로만 작동한다!
+	    return s.equalsIgnoreCase((String) o);
+	return false;
+    }
+
+    public static void main(String[] args) {
+        // cis.equals(s) -> true
+        // s.equals(cis) -> false => 대칭성 위배
+        CaseInsensitiveString cis = new CaseInsensitiveString("Polish");
+        String s = "polish";
+
+        List<CaseInsensitiveString> list = new ArrayList<>();
+        list.add(cis);
+
+        System.out.println(list.contains(s));
+    }
+    ...
+    // 수정한 equals 메소드 => CaseInsensitiveString의 equals를 String과 연동할 수 없다.
+    // 해당 케이스는 대칭성을 만족 시킬 수 없음
+    @Override 
+    public boolean equals(Object o) {
+	return o instanceof CaseInsensitiveString && ((CaseInsensitiveString) o).s.equalsIgnoreCase(s);
+    }
+}
+```
 #### 3. 추이성 (transitivity): null이 아닌 모든 참조 값 x, y, z에 대해 x.equals(y)가 true이고 y.equals(z)도 true이면, x.equals(z)도 true이다.
-- **결론: 구체 클래스를 확장해 새로운 값을 추가하면서 equals 규약을 만족시킬 방법은 존재하지 않는다.**
+- **구체 클래스를 확장해 새로운 값을 추가하면서 equals 규약을 만족시킬 방법은 존재하지 않는다.**
 ``` java
 public class Point {
-	private final int x;
-	private final int y;
+    private final int x;
+    private final int y;
 
-	public Point(int x, int y) {
-		this.x = x;
-		this.y = y;
-	}
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (!(o instanceof Point))
-			return false;
-		Point p = (Point) o;
-		return p.x == x && p.y == y;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Point))
+	    return false;
+        Point p = (Point) o;
+        return p.x == x && p.y == y;
+    }
 }
 ```
 #### 새로운 필드를 하위 클래스에 추가하는 경우
 ``` java
+public class ColorPoint extends Point {
+    private final Color color;
+
+    public ColorPoint(int x, int y, Color color) {
+        super(x, y);
+        this.color = color;
+    }
+    ...
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ColorPoint))
+            return false;
+        return super.equals(o) && ((ColorPoint) o).color == color;
+    }
+    public static void main(String[] args) {
+        // Point의 equals는 색상을 무시하고, 좌표만을 가지고 판단하여 true
+        // ColorPoint의 equals는 매개변수 클래스 종류가 달라서 매번 false
+        Point p = new Point(1, 2);
+        ColorPoint cp = new ColorPoint(1, 2, Color.RED);
+        System.out.println(p.equals(cp) + " " + cp.equals(p));
+    }
+    ...
+}
 ```
 #### 리스코프 치환 원칙 위배
 - 리스코프 치환 원칙: 자식 클래스는 언제나 자신의 부모 클래스를 대체할 수 있다는 원칙
