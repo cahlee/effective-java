@@ -1,5 +1,7 @@
 # Item1 : 생성자 대신 정적 팩터리 메서드를 고려하라 
 ---------------
+목적 => 정적 팩토리 메서드를 알아보자 
+
 #### 정적 팩터리 메서드 예시)
 ```java
 public static Boolean valueOf(boolean b){
