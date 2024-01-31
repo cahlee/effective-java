@@ -24,3 +24,6 @@
 	3. LSP(Listov Substitution Priciple): 리스코프 치환 원칙  
 	4. ISP(Interface Segregation Principle): 인터페이스 분리 원칙  
 	5. DIP(Dependency Inversion Principle): 의존 역전 원칙  
+
+참고 :  
+<https://inpa.tistory.com/entry/OOP-%F0%9F%92%A0-%EA%B0%9D%EC%B2%B4-%EC%A7%80%ED%96%A5-%EC%84%A4%EA%B3%84%EC%9D%98-5%EA%B0%80%EC%A7%80-%EC%9B%90%EC%B9%99-SOLID>
