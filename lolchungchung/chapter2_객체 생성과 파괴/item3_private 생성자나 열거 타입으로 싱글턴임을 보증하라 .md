@@ -137,4 +137,5 @@ enum LottoRank {
 ```
 이외에 예시로 Taxi, Bus, Subway 같이 교통수단 요금책정 등등이 있다.
 
-참고 https://eatnows.tistory.com/91
+참고 https://eatnows.tistory.com/91  
+참고 : 공통 코드 관리, 배달의 민족 enum : <https://techblog.woowahan.com/2527/>
