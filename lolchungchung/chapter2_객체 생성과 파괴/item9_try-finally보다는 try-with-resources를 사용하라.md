@@ -36,3 +36,4 @@ static String firstLineOfFile(String path, String defaultVal){
 <br>
 
 --------------------------
+<https://almond0115.tistory.com/entry/AutoCloseable-%ED%81%B4%EB%9E%98%EC%8A%A4>
