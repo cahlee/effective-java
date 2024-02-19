@@ -10,9 +10,12 @@ euqlas(Object)가 두 객체를 다르다고 판단했더라도, 두 객체의 h
 
 hashCode 재정의를 잘못했을 때 크게 문제가 되는 조항은 두번째다. 즉, 논리적으로 같은 객체는 같은 해시 코드를 반환해야 한다.
 
-ex) Map<PhoneNumber, String> m = new HashMap<>();
+ex) 
+```java
+Map<PhoneNumber, String> m = new HashMap<>();
 m.put(new PhonewNumber(707, 867, 5309), "제니");
- 
+```
+
 이 코드 다음에 m.get(new PhoneNumber(707, 867, 5309))를 실행하면 "제니"가 아니라 null이 반환된다.
 Why? 
 이 코드는 두개의 인스턴스가 사용됨.
@@ -24,22 +27,26 @@ PhoneNumber 클래스는 hashCode를 재정의하지 않아서 논리적 동치�
 
 => PhoneNumber에 적절한 hashCode 메소드만 작성해주면 해결된다.
 
-최악의(하지만 적법한) hashCode 구현 
+최악의(하지만 적법한) hashCode 구현
+```java
 @Override public int hashCode(){
 	return 42;
 }
+```
 
 좋은 해시코드 작성방법 : p68참고
 
 
 PhoneNumber 클래스 예시
 
+```java
 @Override public int hashCode(){
 	int result = Short.hashCode(areaCode);
 	result = 31 * result + Short.hashCode(prefix);
 	result = 31 * result + Short.hashCode(lineNum);
 	return result;
 }
+```
 
 Object 클래스는 임의의 개수만큼 객체를 받아 해시코드를 계산해주는 정적 메소드인 hash를 제공한다.
 단 한줄로 작성가능하지만 속도가 느려 성능에 민감하다면 지양한다.
