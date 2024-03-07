@@ -30,7 +30,7 @@ public interface PhysicalConstants {
 
 #### 상수 공개 방법 3가지
 
-#### 1. 클래스나 인터페이스 자체에 추가하는 방법(ex Integer, MAX_VALUE,MIN_VALUE, DOUBLE)
+#### 1. 클래스나 인터페이스 자체에 추가하는 방법(ex Integer, MAX_VALUE, MIN_VALUE, DOUBLE)
 ```java
 public final class Integer extends Number implements Comparable<Integer> {
   ...
