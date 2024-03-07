@@ -8,7 +8,7 @@
 자바 8부터 인터페이스도 디폴트 메소드를 제공할수 있다.<br>
 
 디폴트 메소드란?    
-https://devbksheen.tistory.com/entry/%EB%94%94%ED%8F%B4%ED%8A%B8-%EB%A9%94%EC%84%9C%EB%93%9Cdefault-method%EB%9E%80
+https://velog.io/@heoseungyeon/%EB%94%94%ED%8F%B4%ED%8A%B8-%EB%A9%94%EC%84%9C%EB%93%9CDefault-Method
 
 #### 인터페이스와 추상클래스 둘의 차이 : 추상클래스가 정의한 타입을 구현하는 클래스는 반드시 추상 클래스의 하위 클래스가 되어야한다.
 #### => 새로운 타입을 정의하는데 커다란 제약이 됌.
@@ -17,7 +17,7 @@ https://devbksheen.tistory.com/entry/%EB%94%94%ED%8F%B4%ED%8A%B8-%EB%A9%94%EC%84
 
 ### 인터페이스 장점 1. 기존 클래스에 손쉽게 새로운 인터페이스를 구현해 넣을 수 있다.
 	
-자바의 인터페이스 : comparable, Iterable, autoCloseable 
+자바의 인터페이스 comparable, Iterable, autoCloseable 가 새로 추가할때도 기존 클래스들이 이 인터페이스를 구현한 채 릴리스 됐다.   
 
 ### 인터페이스 장점 2. 인터페이스는 믹스인(mixin)정의에 안성맞춤이다.   
 
