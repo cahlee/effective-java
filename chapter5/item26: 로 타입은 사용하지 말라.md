@@ -16,11 +16,11 @@
 ## 제네릭 타입
 - 제네릭 클래스, 제네릭 인터페이스
 - 클래스와 인터페이스 선언에 타입 매개변수가 쓰인 것
-- List<E>의 E는 정규 타입 매개변수
-- List<String>의 String은 실제 타입 매개변수 
+- List\<E>의 E는 정규 타입 매개변수
+- List\<String>의 String은 실제 타입 매개변수 
 ## 로 타입
 - 제네릭 타입에서 타입 매개변수를 사용하지 않은 경우
-- List<E>의 로 타입은 List
+- List\<E>의 로 타입은 List
 - 제네릭 도입 전 코드와 호환을 위해
 ``` java
 // Stamp 인스턴트만 취급하기로 마음 먹은 로 타입
@@ -36,8 +36,8 @@ for (Iterator i = stamps.iterator(); i.hasNext()) {
 // Stamp 인스턴스만 넣을 수 있음
 private final Collection<Stamp> stamps = ... ;
 ```
-- List<Object> 임의 객체를 혀용하는 매개변수화 타입은 괜찮음
-  - List를 받는 메서드에 List<String>은 넘길 수 있지만 List<Object>는 못 넘김
+- List\<Object> 임의 객체를 혀용하는 매개변수화 타입은 괜찮음
+  - List를 받는 메서드에 List\<String>은 넘길 수 있지만 List\<Object>는 못 넘김
   - 제네릭의 하위 타입 규칙 때문
 ``` java
 public static void main(String[] args) {
@@ -53,7 +53,7 @@ private static void unsafeAdd(List list, Object o) {
 ```
 ## 비한정적 와일드카드 타입
 - 실제 타입 매개변수가 무엇인지 신경 쓰고 싶지 않을 때 사용
-- 예) List<?>
+- 예) List\<?>
 - null 외에 어떤 원소도 넣을 수 없음.
   - 불변식 훼손 불가
 ``` java
@@ -70,7 +70,7 @@ private static int numElementsInCommon(Set<?> s1, Set<?> s2) {
 ```
 ## 예외
 1. class 리터럴
-  - List.class (O), List<String>.class (X)
+  - List.class (O), List\<String>.class (X)
 2. instanceof
   - if (o instanceof Set) {...}
 ## 정리
