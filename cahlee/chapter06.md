@@ -51,7 +51,7 @@ applyStyles 메서드가 EnumSet<Style>이 아닌 Set<Style>을 받은 이유 : 
 
 ## 아이템37. ordinal 인덱싱 대신 EnumMap을 사용하라
 
-### 상황
+### 예시1
 
 정원(garden)에 심은 식물(Plant)들을 배열 하나로 관리(Plant[] garden)하고 생애주기(LifeCycle) 별로 묶는다.
 -> 생애주기별로 총 3개의 집합(Set)을 만들고, 정원을 한바퀴 돌며 각 식물을 해당 집합에 넣는다.
@@ -139,4 +139,116 @@ System.out.println(Arrays.stream(garden)
 System.out.println(Arrays.stream(garden)
       .collect(groupingBy(p -> p.lifeCycle,
         () -> new EnumMap<>(LifeCycle.class), toSet())));
+```
+
+### 예시2
+
+두 가지 상태(Phase)를 전이(Transition)와 매핑하도록 구현한 프로그램
+-> 액체(LIQUID)에서 고체(SOLID)로의 전이는 응고(FREEZE), 액체(LIQUID)에서 기체(GAS)로의 전이는 기화(BOIL) 등
+
+#### 두 열거 타입 값들을 매핑하느라 ordinal을 (두 번이나) 쓴 배열들의 배열 - 나쁜 사례
+
+```java
+public enum Phase {
+  SOLID, LIQUID, GAS;
+
+  public enum Transition {
+    MELT, FREEZE, BOIL, CONDENSE, SUBLIME, DEPOSIT;
+
+    // 행은 from ordinal을, 열은 to의 ordinal을 인덱스로 쓴다.
+    private static final Transition[][] TRANSITIONS = {
+      { null, MELT, SUBLIME },
+      { FREEZE, null, BOIL },
+      { DEPOSIT, CONDENSE, null }
+    };
+
+    // 한 상태에서 다른 상태로의 전이를 반환한다.
+    public static Transition from(Phase from, Phase to) {
+      return TRANSITIONS[from.ordinal()][to.ordinal()];
+    }
+  }
+}
+```
+
+문제점
+
+- ordinal과 배열 인덱스와 관계를 알 수 없다.(출력 시 결과 레이블 매핑 필요, 배열 인덱스에 정숫값 사용 보증 못함 등)
+  -> Phase나 Phase.Transition 열거 타입을 수정하면서 상전이 표(TRANSITIONS)를 수정하지 않으면 오류 발생
+- 상전이 표의 크기는 가짓수가 늘어나면 제곱해서 커지고, null로 채워지는 칸도 늘어난다.
+
+#### EnumMap을 사용한 경우
+
+- 전이 하나를 얻으려면 이전 상태(from)와 이후 상태(to)가 필요하니 맵을 중첩해서 해결
+- 안쪽 맵은 이전 상태와 전이 연결
+- 바깥쪽 맵은 이후 상태와 안쪽 맵 연결
+- 전이 전후의 두 상태를 전이 열거 타입 Transition의 입력으로 받아, 이 Transition 상수들로 중첩된 EnumMap을 초기화
+
+```java
+public enum Phase {
+  SOLID, LIQUID, GAS;
+
+  public enum Transition {
+    MELT(SOLID, LIQUID), FREEZE(LIQUID, SOLID),
+    BOIL(LIQUID, GAS), CONDENSE(GAS, LIQUID),
+    SUBLIME(SOLID, GAS), DEPOSIT(GAS, SOLID);
+  }
+
+  private final Phase from;
+  private final Phase to;
+
+  Transition(Phase from, Phase to) {
+    this.from = from;
+    this.to = to;
+  }
+
+  // 상전이 맵을 초기화한다.
+  private static final Map<Phase, Map<Phase, Transition>> m = Stream.of(values())
+                                                              .collect(groupingBy(t -> t.from,
+                                                                                  () -> new EnumMap<>(Phase.class),
+                                                                                  toMap(t -> t.to,
+                                                                                        t -> t,
+                                                                                        (x, y) -> y,
+                                                                                        () -> new EnumMap<>(Phase.class))));
+
+  public static Transition from(Phase from, Phase to) {
+    return m.get(from).get(to);
+  }
+}
+```
+
+코드 설명
+
+- Map<Phase, Map<Phase, Transition>>은 "이전 상태에서 '이후 상태에서 전이로의 맵'에 대응시키는 맵"
+- 맵의 맵을 초기화하기 위해 수집기(java.util.stream.Collector) 2개를 차례로 사용
+  -> 첫 번째 수집기인 groupingBy에서는 전이를 이전 상태를 기준을 묶음
+  -> 두 번째 수집기인 toMap에서는 이후 상태를 전이에 대응시키는 EnumMap을 생성
+  -> 두 번째 수집기의 병합 함수인 (x, y) -> y는 선언만 하고 실제로는 쓰이지 않고, 단지 EnumMap을 얻기 위해 맵 팩터리가 필요하고 수집기들은 점층적 팩터리(telescoping factory)를 제공
+
+### 예시2에서 새로운 상태인 플라즈마(PLASMA)가 추가된 경우
+
+기체에서 플라스마로 변하는 이온화(IONIZE), 플라스마에서 기체로 변하는 탈이온화(DEIONIZE) 추가
+
+#### 두 열거 타입 값들을 매핑하느라 ordinal을 (두 번이나) 쓴 배열들의 배열 - 나쁜 사례
+
+- 새로운 상수를 Phase에 1개, Phase.Transition에 2개를 추가하고, 원소 9개짜리인 배열들의 배열을 원소 16개 짜리로 교체 필요
+- 원소 수를 잘못 기입하거나, 순서가 잘못되면 오류 발생 가능
+
+#### EnumMap을 사용한 경우
+
+- 상태 목록에 PLASMA를 추가하고, 전이 목록에 IONIZE(GAS, PLASMA)와 DEIONIZE(PLASMA, GAS)만 추가하면 끝
+- EnumMap의 내부에서는 맵들의 맵이 배열들의 배열로 구현되어 낭비되는 공간과 시간이 거의 없고, 명확하고 안전하고 유지보수하기 좋다.
+
+```java
+public enum Phase {
+  SOLID, LIQUID, GAS, PLASMA;
+
+  public enum Transition {
+    MELT(SOLID, LIQUID), FREEZE(LIQUID, SOLID),
+    BOIL(LIQUID, GAS), CONDENSE(GAS, LIQUID),
+    SUBLIME(SOLID, GAS), DEPOSIT(GAS, SOLID),
+    IONIZE(GAS, PLASMA), DEIONIZE(PLASMA, GAS);
+
+    ... // 나머지 코드는 그대로
+  }
+}
 ```
