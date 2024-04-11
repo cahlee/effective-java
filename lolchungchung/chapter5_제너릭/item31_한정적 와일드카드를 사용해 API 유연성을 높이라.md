@@ -102,22 +102,22 @@ public void popAll(Collection<? super E> dst) {
 
 ##### 예시 1) 아이템 28의 Chooser 생성자, choices 컬렉션은 T 타입의 값을 생산만 하니 T를 확장하는 와일드 카드 타입 사용 
 ```java
-public Chooser(Collection<T> choices)    
-public Chooser(Collection<? extends T> choices)
+public Chooser(Collection<T> choices);
+public Chooser(Collection<? extends T> choices);
 ```
 
 #### 예시 2) 코드 30-2의 union 메소드, s1 E와 s2 E 모두 생산자
 ```java
-public static <E> set<E> union(Set<E> s1, Set<E> s2)    
-public static <E> Set<E> union(Set<? extends E> s1, Set<? extends E> s2)
+public static <E> set<E> union(Set<E> s1, Set<E> s2);
+public static <E> Set<E> union(Set<? extends E> s1, Set<? extends E> s2);
 ```
 
 ( 반환타입에는 한정적 와일드 카드 타입을 사용하지 말것, 유연하긴 커녕 오히려 클라이언트 코드에서도 와일드 카드를 기술해야됌)
 
 #### 예시 3) 코드 30-7의 max 메소드 
 ```java
-public static <E extends Comparable<E>> E max(List<E> list)   
-public static <E extends Comparable<? super E>> E max(List<? extends E> list)   
+public static <E extends Comparable<E>> E max(List<E> list);
+public static <E extends Comparable<? super E>> E max(List<? extends E> list);
 ```
 
 위는 PECS를 두번 적용하였음.   
