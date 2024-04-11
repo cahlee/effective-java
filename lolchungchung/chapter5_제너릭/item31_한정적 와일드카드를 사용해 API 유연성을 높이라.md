@@ -128,6 +128,40 @@ public static <E extends Comparable<? super E>> E max(List<? extends E> list);
 
 ### 타입 매개변수와 와일드 카드, 어떤것을 써야하는가?
 
+```java
+class swapTest {
+    // 방법1) 비한정적 타입 매개변수
+    public static <E> void typeArgSwap(List<E> list, int i, int j) {
+        list.set(i, list.set(j, list.get(i)));
+    }
+
+    // 방법2) 비한정적 와일드카드
+    public static void wildcardSwap(List<?> list, int i, int j) {
+        wildcardSwapHelper(list, i, j);
+    }
+
+    // 방법2-1) 와일드카드 형에는 null외에 어떤 값도 넣을 수 없다.
+    // 방법1과 메서드 시그니처(이름과 파라미터)가 동일하다.
+    private static <E> void wildcardSwapHelper(List<E> list, int i, int j) {
+        list.set(i, list.set(j, list.get(i)));
+    }
+}
+
+```
+바깥에서 호출 가능한 public API라면 간단하게 두 번째 방식을 사용하면 타입 매개변수에 대해 신경쓰지 않아도 되므로 더 편리하지만 
+
+리스트의 타입이 와일드카드 형태인 List<?>에는 null 외에는 어떤 값도 넣을 수 없는 문제가 있다.(아이템26)
+
+따라서 와일드 카드 타입의 실제 타입을 알기 위하여 제네릭 메서드(위 코드에서 wildcardSwapHelper)가 있어야 된다.
+
+이 메서드는 매개변수로 넘어오는 리스트가 List<E>에서 꺼낸 값의 타입이 항상 E 임을 알고 있으며 이는 리스트에 넣어도 타입 안전함을 알고 있다.
+
+물론 와일드카드 메서드를 지원하기 위하여 추가적인 메서드가 작성되었지만 클라이언트의 입장에서는 타입 매개변수에 신경쓰지 않는 메서드를 사용할 수 있게 된다.
+
+
 ## 정리   
-#### 클라이언트에서 입력 매개변수 및 반환값을 명시적으로 형변환하는 메서드보다 제네릭 메서드가 더 안전하고 사용하기도 쉽다.   
-#### 형 변환은 런타임 시에 에러를 동반하기 쉬우므로 제네릭을 사용하자.   
+PECS를 기억하며 한정적 와일드 카드를 기억하자.
+
+공급자: 어떤 인자들을 받아서 사용하는데 상위 타입으로 정의되어 있고 하위 타입을 받아서 작업하는 다형성을 활용하는 경우
+
+소비자: 해당 타입이 데이터를 가져가는 경우(데이터를 가져가는 경우는 해당 타입과 상위타입만 가능)나, 하위타입에서 정의되지 않고 상위 타입에서 정의된 무엇인가를 활용하는 경우
