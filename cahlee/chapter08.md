@@ -186,3 +186,189 @@ static List<Integer> intArrayAsList(int[] a) {
 - 계산 과정에서 필요한 유효성 검사가 이뤄지지만 실패했을때 잘못된 예외 발생 가능 - 실제 발생한 예외가 API에 명시된 예외 상이(예외 번역 관용구 사용 필요)
 
 ### 매개변수 제약은 적을수록 좋다 - 메서드는 최대한 범용적으로 설계 필요(특정한 제약을 내재한 경우)
+
+## 아이템54. null이 아닌, 빈 컬렉션이나 배열을 반환하라
+
+null이 반환하면, 클라이언트에서 null 상황을 처리하는 코드 추가 작성 필요
+
+방어 코드가 없으면 오류 발생 가능성이 높아지고 반환 하는 쪽에서도 특별 취급해줘야하여 코드 복잡도가 높아짐
+
+컬렉션이 비었으면 null을 반환 - 나쁜 사례
+```java
+private final List<Cheese> cheesesInStock = ...;
+
+/**
+  * @return 매장 안의 모든 치즈 목록을 반환한다.
+  * 
+  */
+public List<Cheese> getCheeses() {
+  return cheesesInStock.isEmpty() ? null : new ArrayList<>(cheeseInStock);
+}
+```
+
+상황을 처리하는 클라이언트 방어 코드
+```java
+List<Cheese> cheeses = shop.getCheeses();
+if (cheeses != null && cheeses.contains(Cheese.STILTON))
+  System.out.println("좋았어, 바로 그거야.");
+```
+
+- 빈 컨테이너를 할당하는 비용으로 인한 성능 차이는 미미함
+- 빈 컬렉션과 배열은 새로 할당하지 않고 반환 가능 -> 불변 객체(Collections.emptyList, Collections.emptySet, Collections.emptySet) 또는 길이가 0인 배열 반환
+
+빈 컬렉션을 반환하는 올바른 예
+```java
+public List<Cheese> getCheese() {
+  return new ArrayList<>(cheesesInStock);
+}
+```
+
+최적화 - 빈 컬렉션을 매번 새로 할당하지 않도록 함
+```java
+public List<Cheese> getCheese() {
+  cheesesInStock.isEmpty() ? Collections.emptyList() : new ArrayList<>(cheeseInStock);
+}
+```
+
+길이가 0일 수도 있는 배열을 반환하는 올바른 방법
+```java
+public Cheese[] getCheese() {
+  return cheesesInStock.toArray(new Cheese[0]);
+}
+```
+
+최적화 - 빈 배열을 매번 새로 할당하지 않도록 했다.(길이가 0짜리 배열은 모두 불변)
+```java
+private static final Cheese[] EMPTY_CHEESE_ARRAY = new Cheese[0];
+
+public Cheese[] getCheeses() {
+  return cheesesInStock.toArray(EMPTY_CHEESE_ARRAY);
+}
+```
+
+나쁜 예 - 배열을 미리 할당하면 성능이 나빠진다.
+```java
+return cheesesInStock.toArray(new Cheese[cheesesInStock.size()]);
+```
+
+## 아이템55. 옵셔널 반환은 신중히 하라
+
+### 메서드가 특정 조건에서 값을 반환할 수 없을 때
+
+- 자바8 이전
+1. 예외 throw - 예외는 예외적인 상황에서만 사용해야하며, 예외 생성 시 스택 추적 전체를 캡처하여 고비용
+2. null 반환(객체) - NPE를 방어하기 위한 코드 작성 필수
+
+- 자바8 이후 : Optional<T> 반환 가능 - null이 아닌 T 타입 참조를 하나 담거나 빈 Optional 반환
+
+#### Optional<T>
+원소를 최대 1개 가질 수 있는 불변 컬렉션(Collection<T>를 구현한건 아님)
+
+- 아무것도 담지 않은 Optional : 비었다
+- 어떤 값을 담은 Optional : 비지 않았다
+- 옵셔널을 반환하는 메서드는 예외를 던지는 메서드보다 유연하고 사용하기 쉽고, null을 반환하는 메서드보다 오류 가능성이 낮음
+
+컬렉션에서 최댓값을 구한다(컬렉션이 비었으면 예외를 던진다)
+```java
+public static <E extends Comparable<E>> E max(Collection<E> c) {
+  if (c.isEmpty())
+    throw new IllegalArgumentException("빈 컬렉션");
+
+  E result = null;
+  for (E e : c)
+    if (result == null || e.compareTo(result) > 0)
+      result = Objects.requireNonNull(e);
+
+  return result;
+}
+```
+
+컬렉션에서 최댓값을 구해 Optional<E>로 반환한다.
+```java
+public static <E extends Comparable<E>> Optional<E> max(Collection<E> c) {
+  if (c.isEmpty())
+    return Optional.empty();    // 빈 옵셔널
+
+  E result = null;
+  for (E e : c)
+    if (result == null || e.compareTo(result) > 0)
+      result = Objects.requireNonNull(e);
+
+  return Optional.of(result);    // 값이 든 옵셔널
+}
+```
+
+- 빈 옵셔널은 Optional.empty()로 생성
+- 값이 든 옵셔널은 Optional.of(value)로 생성 : value가 null이면 NPE 발생
+- null값도 허용하는 옵셔널 : Optional.ofNullable(value) 사용
+- Optional을 반환하는 메서드에서는 절대 null을 반환하지 말것
+- 스트림의 종단 연산 중 상당수가 옵셔널 반환
+
+컬렉션에서 최댓값을 구해 Optional<E>로 반환한다. - 스트림 버전
+```java
+public static <E extends Comparable<E>> Optional<E> max(Collection<E> c) {
+  return c.stream().max(Comparator.naturalOrder());
+}
+```
+
+null을 반환하거나 예외를 던지는 대신 옵셔날 반환을 선택해야하는 기준
+- 검사 예외와 취지가 비슷(반환 값이 없을 수도 있음을 API 사용자에게 명확히 전달)
+- 비검사 예외를 던지거나 null을 반환하면 API 사용자가 인지하지 못해 오류 발생
+- 옵셔널이 반환되면 클라이언트는 값을 받지 못했을 때 행동 선택 필요
+
+옵셔널 활용 1 - 기본값 설정
+```java
+String lastWordInLexicon = max(words).orElse("단어 없음...");
+```
+
+옵셔널 활용 2 - 원하는 예외 발생
+```java
+Toy myToy = max(toys).orElseThrow(TemperTantrumException::new);
+```
+
+옵셔널 활용 3 - 항상 값이 채워져 있다고 가정한다.
+```java
+Element lastNobleGas = max(Elements.NOBLE_GASES).get();  // NoSuchElementException 발생 가능
+```
+
+- 기본값을 설정하는 비용이 커서 부담스러우면 Supplier<T>를 인수로 받는 orElseGet을 사용 - 값이 처음 필요할 때 Supplier<T>를 사용해 생성
+- filter, map, flatMap, ifPresent 사용
+- isPresent : 옵셔널이 채워져 있으면 true, 비어있으면 false 반환 - 신중히 사용(filter, map, flatMap으로 대체 가능)
+
+부모 프로세스의 프로세스 ID를 출력하거나, 부모가 없다면 "N/A" 출력
+```java
+Optional<ProcessHandle> parentProcess = ph.parent();
+System.out.println("부모 PID: " + (parentProcess.isPresent() ? String.valueOf(parentProcess.get().pid()) : "N/A"));
+```
+
+Optional의 map 사용 예시
+```java
+System.out.println("부모 PID: " + ph.parent().map(h -> String.valueOf(h.pid())).orElse("N/A"));
+```
+
+스트림을 사용하면 옵셔널들을 Stream<Optional<T>>로 받아서 채워진 옵셔널들에서 값을 뽑아 Stream<T>에 건네 담아 처리하는 경우가 많다.
+````java
+streamOfOptionals
+    .filter(Optional::isPresent)
+    .map(Optional::get)
+```
+
+- 자바9 : Optional에 stream() 메서드 추가(Optional을 Stream으로 변환) - 옵셔널에 값이 있으면 그 값을 원소로 담은 스트림으로, 값이 없다면 빈 스트림으로 변환
+```java
+steramOfOptionals
+    .flatMap(Optional::stream)
+```
+
+옵셔널이 해가되는 경우
+- 컬렉션, 스트림, 배열, 옵셔널 같은 컨테이너 타입을 옵셔널로 감싸면 안된다 : Optional<List<T>>를 반환하기보다는 빈 List<T>를 반환
+- 옵셔널을 맵의 값으로 사용하지 말 것 : 맵 안에 키가 없다는 사실을 나타내는 방법이 2가지가 됨(키 자체가 없는 경우, 키는 있지만 키가 빈 옵셔널인 경우)
+- 컬렉션의 키, 값, 원소나 배열의 원소로 사용하지 말 것
+- 박싱된 기본 타입을 담는 옵셔널은 기본 타입 자체보다 무겁기 때문에 반환하지 말것 - int, long, double 전용 옵셔널 사용(OptionalInt, OptionalLong, OptionalDouble)
+
+메서드 타입을 T 대신 Optional<T>로 선언되어야 하는 규칙
+- 결과가 없을 수 있으며, 클라이언트가 이 상황을 특별하게 처리해야할 경우
+- Optional<T>를 반환 비용도 고려 필요(성능)
+
+옵셔널을 인스턴스 필드에 저장하는 것이 필요한 경우
+- 필수 필드를 갖는 클래스와 선택적 필드를 추가한 하위 클래스 -> 리팩토링 필요
+- 필수 필드들이 기본 타입이라 값이 없음을 나타낼 수 있는 방법이 없음 -> 선택적 필드를 옵셔널로 선언하고 getter 메서드들이 옵셔널을 반환하도록 가능
